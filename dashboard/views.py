@@ -8,6 +8,7 @@ from youtubesearchpython import VideosSearch
 import wikipedia
 import requests
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
 def home(request):
     return render(request,'dashboard/home.html')
 
@@ -110,6 +111,8 @@ def youtube(request):
     else:
         form = DashboardForm()
     return render(request, 'dashboard/youtube.html', {'form': form})
+
+
 @login_required
 def todo(request):
     if request.method=='POST':
@@ -279,3 +282,8 @@ def profile(request):
         'todo_done':todo_done,
     }
     return render(request,'dashboard/profile.html',context)
+
+@login_required
+def user_logout(request):
+    logout(request)
+    return render(request,'dashboard/logout.html')
