@@ -6,6 +6,7 @@ from django.views import generic
 from dashboard.forms import Noteform,HomeworkForm,DashboardForm,Todoform,UserRegisterForm
 from youtubesearchpython import VideosSearch
 import wikipedia
+import yt_dlp
 import requests
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
@@ -84,32 +85,46 @@ def delete_homework(request,pk=None):
     return redirect("homework")
 
 
+def youtube_search(query):
+    ydl_opts = {
+        'quiet': True,
+        'extract_flat': True,
+        'force_generic_extractor': True
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        result = ydl.extract_info(f"ytsearch10:{query}", download=False)
+        return result['entries']
+
 def youtube(request):
     if request.method == 'POST':
         form = DashboardForm(request.POST)
         if form.is_valid():
             text = form.cleaned_data['text']
             try:
-                video_search = VideosSearch(text, limit=10)
+                search_results = youtube_search(text)
                 result_list = []
-                for i in video_search.result()['result']:
+                for video in search_results:
                     result_dict = {
                         'input': text,
-                        'title': i.get('title', 'No Title'),
-                        'duration': i.get('duration', 'N/A'),
-                        'thumbnails': i.get('thumbnails', [{'url': ''}])[0].get('url', ''),
-                        'channel': i.get('channel', {}).get('name', 'No Channel'),
-                        'link': i.get('link', '#'),
-                        'views': i.get('viewCount', {}).get('short', '0 views'),
-                        'published': i.get('publishedTime', 'Unknown'),
+                        'title': video.get('title', 'No Title'),
+                        'duration': video.get('duration', 'N/A'),
+                        'thumbnails': video.get('thumbnails', [{'url': ''}])[0].get('url', ''),
+                        'channel': video.get('uploader', 'No Channel'),
+                        'link': video.get('url', '#'),
+                        'views': video.get('view_count', '0 views'),
+                        'published': video.get('upload_date', 'Unknown'),
                     }
                     result_list.append(result_dict)
+                
                 context = {'form': form, 'results': result_list}
                 return render(request, 'dashboard/youtube.html', context)
+
             except Exception as e:
                 messages.error(request, f"An error occurred: {str(e)}")
     else:
         form = DashboardForm()
+    
     return render(request, 'dashboard/youtube.html', {'form': form})
 
 
