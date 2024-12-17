@@ -25,7 +25,7 @@ class HomeworkForm(forms.ModelForm):
         }
     def clean_due(self):
         due_date = self.cleaned_data.get('due')
-        if due_date and due_date < now().date():
+        if due_date and due_date < now():
             raise forms.ValidationError("The due date cannot be in the past.")
         return due_date
 
